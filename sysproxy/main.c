@@ -24,8 +24,8 @@ enum RET_ERRORS
 
 void usage(LPCTSTR binName)
 {
-    _tprintf(_T("Usage: %s global <proxy server> [<bypass>]\n"), binName);
-    _tprintf(_T("       %s pac <pac url>\n"), binName);
+    _tprintf(_T("Usage: %s global <proxy-server> [<bypass-list>]\n"), binName);
+    _tprintf(_T("       %s pac <pac-url>\n"), binName);
     _tprintf(_T("       %s off\n"), binName);
 
     exit(INVALID_FORMAT);
@@ -67,7 +67,7 @@ void initialize(INTERNET_PER_CONN_OPTION_LIST* options, int option_count)
     options->dwOptionCount = option_count;
     options->dwOptionError = 0;
 
-    options->pOptions = (INTERNET_PER_CONN_OPTION*)calloc(option_count, sizeof(INTERNET_PER_CONN_OPTION));
+    options->pOptions = calloc(option_count, sizeof(INTERNET_PER_CONN_OPTION));
 
     if (!options->pOptions)
     {
@@ -88,6 +88,9 @@ int apply_connect(INTERNET_PER_CONN_OPTION_LIST* options, LPTSTR conn)
         reportWindowsError(_T("setting options"));
         return SYSCALL_FAILED;
     }
+
+    free(options->pOptions);
+    options->pOptions = NULL;
 
     result = InternetSetOption(NULL, INTERNET_OPTION_PROXY_SETTINGS_CHANGED, NULL, 0);
     if (!result)
@@ -190,6 +193,12 @@ int _tmain(int argc, LPTSTR argv[])
     }
     else if (_tcscmp(argv[1], _T("global")) == 0 && argc >= 3)
     {
+        if (argc > 4)
+        {
+            _tprintf(_T("Error: bypass list shouldn't contain spaces, please check parameters.\n"));
+            usage(argv[0]);
+        }
+
         initialize(&options, 3);
 
         options.pOptions[0].Value.dwValue = PROXY_TYPE_PROXY | PROXY_TYPE_DIRECT;
@@ -199,12 +208,7 @@ int _tmain(int argc, LPTSTR argv[])
 
         options.pOptions[2].dwOption = INTERNET_PER_CONN_PROXY_BYPASS;
 
-        if (argc > 4)
-        {
-            _tprintf(_T("Error: bypass list shouldn't contain spaces, please check parameters.\n"));
-            usage(argv[0]);
-        }
-        else if (argc == 4)
+        if (argc == 4)
         {
             options.pOptions[2].Value.pszValue = argv[3];
         }
