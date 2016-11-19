@@ -24,7 +24,7 @@ enum RET_ERRORS
 
 void usage(LPCTSTR binName)
 {
-    _tprintf(_T("Usage: %s global <proxy server>\n"), binName);
+    _tprintf(_T("Usage: %s global <proxy server> [<bypass>]\n"), binName);
     _tprintf(_T("       %s pac <pac url>\n"), binName);
     _tprintf(_T("       %s off\n"), binName);
 
@@ -198,7 +198,20 @@ int _tmain(int argc, LPTSTR argv[])
         options.pOptions[1].Value.pszValue = argv[2];
 
         options.pOptions[2].dwOption = INTERNET_PER_CONN_PROXY_BYPASS;
-        options.pOptions[2].Value.pszValue = _T("<local>");
+
+        if (argc > 4)
+        {
+            _tprintf(_T("Error: bypass list shouldn't contain spaces, please check parameters.\n"));
+            usage(argv[0]);
+        }
+        else if (argc == 4)
+        {
+            options.pOptions[2].Value.pszValue = argv[3];
+        }
+        else
+        {
+            options.pOptions[2].Value.pszValue = _T("<local>");
+        }
     }
     else if (_tcscmp(argv[1], _T("pac")) == 0 && argc >= 3)
     {
